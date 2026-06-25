@@ -17,7 +17,7 @@ exposed as `application`.
 import sys
 
 # --- EDIT THIS: your PythonAnywhere username ---
-USERNAME = "yourusername"
+USERNAME = "ddlsandeep"
 
 # Path to the folder that CONTAINS server.py (the functions/ directory).
 PROJECT_FUNCTIONS_DIR = f"/home/{USERNAME}/shubhlife/functions"
