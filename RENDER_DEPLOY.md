@@ -22,10 +22,6 @@ git branch -M main
 git remote add origin https://github.com/<you>/<repo>.git
 git push -u origin main
 ```
-
-> `.env` is git-ignored, so your secret key is **not** pushed. You'll set the
-> keys in Render's dashboard instead (step 3).
-
 ---
 
 ## 2. Create the web service on Render
