@@ -33,11 +33,40 @@ import json
 import os
 import random
 import string
+import urllib.request
+import urllib.error
 from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(APP_DIR, "..", "data", "customers.json")
+WEB_DIR = os.path.join(APP_DIR, "..", "web")
+ENV_PATH = os.path.join(APP_DIR, "..", ".env")
+
+
+def _load_dotenv(path):
+    """Minimal .env loader (no external dependency). Real env vars always win."""
+    if not os.path.isfile(path):
+        return
+    with open(path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            os.environ.setdefault(key, value)
+
+
+_load_dotenv(ENV_PATH)
+
+# --- Retell web-call config (set these as environment variables or in .env) ---
+# RETELL_API_KEY : your Retell secret key (Dashboard -> API Keys). Never ship this to the browser.
+# RETELL_AGENT_ID: the agent you want the website visitor to talk to.
+RETELL_API_KEY = os.environ.get("RETELL_API_KEY", "")
+RETELL_AGENT_ID = os.environ.get("RETELL_AGENT_ID", "")
+RETELL_CREATE_WEB_CALL_URL = "https://api.retellai.com/v2/create-web-call"
 
 app = Flask(__name__)
 
@@ -371,9 +400,67 @@ def escalate_to_agent():
     })
 
 
+# ---------------------------------------------------------------------------
+# Web Voice Agent  (talk to the bot from a browser, no phone needed)
+# ---------------------------------------------------------------------------
+# Flow:
+#   1. Browser loads "/"  -> the web/index.html page.
+#   2. Page POSTs to "/create-web-call" -> we call Retell with the SECRET API key
+#      and hand back only the short-lived access_token (valid ~30s).
+#   3. The Retell Web SDK in the browser uses that token to open a live audio room.
+# The API key never leaves the server, which is exactly why this proxy exists.
+
+@app.route("/", methods=["GET"])
+def web_home():
+    return send_from_directory(WEB_DIR, "index.html")
+
+
+@app.route("/create-web-call", methods=["POST"])
+def create_web_call():
+    if not RETELL_API_KEY:
+        return jsonify({"error": "Server is missing RETELL_API_KEY. Set it as an environment variable."}), 500
+
+    # Allow overriding the agent per-request, else fall back to the configured one.
+    body = request.get_json(silent=True) or {}
+    agent_id = body.get("agent_id") or RETELL_AGENT_ID
+    if not agent_id:
+        return jsonify({"error": "No agent_id configured. Set RETELL_AGENT_ID or pass agent_id in the request."}), 400
+
+    payload = json.dumps({"agent_id": agent_id}).encode("utf-8")
+    req = urllib.request.Request(
+        RETELL_CREATE_WEB_CALL_URL,
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {RETELL_API_KEY}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")
+        return jsonify({"error": "Retell rejected the request.", "status": e.code, "detail": detail}), 502
+    except urllib.error.URLError as e:
+        return jsonify({"error": "Could not reach Retell.", "detail": str(e.reason)}), 502
+
+    # Only return what the browser needs to join the room.
+    return jsonify({
+        "access_token": data.get("access_token"),
+        "call_id": data.get("call_id"),
+        "agent_id": agent_id,
+    })
+
+
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "customers_loaded": len(CUSTOMERS_BY_ID)})
+    return jsonify({
+        "status": "ok",
+        "customers_loaded": len(CUSTOMERS_BY_ID),
+        "retell_api_key_set": bool(RETELL_API_KEY),
+        "retell_agent_id_set": bool(RETELL_AGENT_ID),
+    })
 
 
 if __name__ == "__main__":

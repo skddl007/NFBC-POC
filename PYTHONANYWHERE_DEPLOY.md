@@ -171,6 +171,51 @@ On the **Web** tab there are three log links:
 
 ---
 
+## 10. Web Voice Agent (talk to the bot from a browser)
+
+A browser-based voice UI is served at the site root (`/`). Visitors click the mic,
+allow their microphone, and talk to the Retell agent live — no phone call needed.
+
+### How it works
+- `web/index.html` loads the Retell Web SDK and calls the backend at `/create-web-call`.
+- `/create-web-call` (in `server.py`) calls Retell with your **secret** API key and returns
+  only a short-lived `access_token` to the browser. The API key never reaches the client.
+
+### Required environment variables
+Set these so `/create-web-call` works:
+
+| Variable | Where to find it |
+|----------|------------------|
+| `RETELL_API_KEY`  | Retell Dashboard → **API Keys** (the secret key) |
+| `RETELL_AGENT_ID` | Retell Dashboard → your Agent → the agent's ID |
+
+**Local (PowerShell):**
+```powershell
+$env:RETELL_API_KEY="key_xxxxxxxx"
+$env:RETELL_AGENT_ID="agent_xxxxxxxx"
+python functions/server.py
+# then open http://localhost:5000/
+```
+
+**Local (bash):**
+```bash
+export RETELL_API_KEY="key_xxxxxxxx"
+export RETELL_AGENT_ID="agent_xxxxxxxx"
+python3 functions/server.py
+```
+
+**PythonAnywhere:** add both vars near the top of the WSGI file before importing the app, e.g.:
+```python
+import os
+os.environ["RETELL_API_KEY"]  = "key_xxxxxxxx"
+os.environ["RETELL_AGENT_ID"] = "agent_xxxxxxxx"
+```
+Then **Reload**. Confirm via `/health` — it shows `retell_api_key_set` / `retell_agent_id_set`.
+
+> Microphone access requires HTTPS (or `localhost`). PythonAnywhere serves HTTPS, so it works there.
+
+---
+
 ## Notes / limits (free tier)
 
 - **Always-on URL** — no need to keep your PC or ngrok running.

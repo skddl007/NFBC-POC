@@ -1,0 +1,31 @@
+name: Keep Render awake
+
+# Render's free tier sleeps after ~15 min of inactivity. This pings the
+# /health endpoint on a schedule so the instance stays warm during the day.
+on:
+  schedule:
+    # Every 10 minutes. GitHub may run cron a few minutes late and can pause
+    # the schedule after 60 days of repo inactivity (just re-enable it then).
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}  # lets you trigger it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render health endpoint
+        env:
+          RENDER_URL: ${{ vars.RENDER_URL }}
+        run: |
+          if [ -z "$RENDER_URL" ]; then
+            echo "::error::Set a repository variable named RENDER_URL (e.g. https://your-app.onrender.com)"
+            exit 1
+          fi
+          url="${RENDER_URL%/}/health"
+          echo "Pinging $url"
+          # Retry a few times because a sleeping instance can take ~30-50s to wake.
+          curl --fail --silent --show-error --location \
+               --retry 5 --retry-all-errors --retry-delay 15 \
+               --max-time 90 "$url"
+          echo ""
+          echo "Ping OK"
