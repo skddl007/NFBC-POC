@@ -44,8 +44,23 @@ app = Flask(__name__)
 with open(DATA_PATH, "r", encoding="utf-8") as f:
     DB = json.load(f)
 
+def normalize_mobile(value):
+    """Reduce any mobile format (+91, spaces, dashes, etc.) to its last 10 digits."""
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+    return digits[-10:]
+
+
 CUSTOMERS_BY_ID = {c["id"]: c for c in DB["customers"]}
-CUSTOMERS_BY_MOBILE = {c["mobile"]: c for c in DB["customers"]}
+
+# Index by normalized mobile AND alt_mobile so lookups match regardless of how
+# the number is stored or how the caller's number arrives (+91, spaces, etc.).
+CUSTOMERS_BY_MOBILE = {}
+for _c in DB["customers"]:
+    for _num in (_c.get("mobile"), _c.get("alt_mobile")):
+        _norm = normalize_mobile(_num)
+        if _norm:
+            CUSTOMERS_BY_MOBILE.setdefault(_norm, _c)
+
 FRAUD_LOG = []  # in-memory only, resets on restart — fine for a POC
 
 
@@ -82,8 +97,7 @@ def rupee(amount):
 @app.route("/functions/lookup_customer_by_mobile", methods=["POST"])
 def lookup_customer_by_mobile():
     args = get_args()
-    mobile = (args.get("mobile_number") or "").strip().replace(" ", "").replace("-", "")
-    mobile = mobile[-10:]  # tolerate +91 prefixes
+    mobile = normalize_mobile(args.get("mobile_number"))
     customer = CUSTOMERS_BY_MOBILE.get(mobile)
     if not customer:
         return jsonify({
