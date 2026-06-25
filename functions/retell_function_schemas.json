@@ -1,0 +1,241 @@
+{
+  "_meta": {
+    "purpose": "Custom Function definitions to paste into Retell Agent > Functions tab. Each function should point to a webhook endpoint backed by a small server reading data/customers.json (see docs/backend_stub_guide.md for a ready-made Flask/Express stub).",
+    "note": "Names, parameters, and descriptions follow Retell's custom function schema format (OpenAI-style function calling)."
+  },
+  "functions": [
+    {
+      "name": "lookup_customer_by_mobile",
+      "description": "Looks up a MyShubhLife customer account using their registered mobile number. Call this first, before any other function, once the caller provides their mobile number. Returns basic profile info (name, dob, aadhaar_last4, preferred_language) needed for identity verification — does NOT return loan/financial details yet.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mobile_number": {
+            "type": "string",
+            "description": "10-digit Indian mobile number the caller provides, digits only, no country code or spaces."
+          }
+        },
+        "required": ["mobile_number"]
+      }
+    },
+    {
+      "name": "verify_identity",
+      "description": "Verifies caller identity by matching a secondary identifier against the looked-up account. Call this after lookup_customer_by_mobile succeeds, using whichever identifier the caller can provide fastest (full name, date of birth, or last 4 digits of Aadhaar). Must return true before any financial detail is shared.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "The customer ID returned by lookup_customer_by_mobile."
+          },
+          "verification_type": {
+            "type": "string",
+            "enum": ["full_name", "date_of_birth", "aadhaar_last4"],
+            "description": "Which identifier the caller is providing."
+          },
+          "verification_value": {
+            "type": "string",
+            "description": "The value the caller stated, e.g. 'Ramesh Yadav', '1988-04-12', or '7821'."
+          }
+        },
+        "required": ["customer_id", "verification_type", "verification_value"]
+      }
+    },
+    {
+      "name": "get_loan_details",
+      "description": "Retrieves full details of a customer's loan(s) — principal, interest rate, tenure, EMI amount, paid EMIs, outstanding balance, next due date, overdue status, late fees. Use for questions like 'what was my loan amount', 'when is my next EMI', 'how much do I still owe', 'why is there a late fee'. Only call after identity has been verified.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          },
+          "loan_id": {
+            "type": "string",
+            "description": "Specific loan ID if the caller referenced one (e.g. 'SL2024001') or distinguished by purpose/year. Omit to default to the customer's currently active loan."
+          }
+        },
+        "required": ["customer_id"]
+      }
+    },
+    {
+      "name": "get_payment_history",
+      "description": "Retrieves a customer's payment history — EMIs paid so far, total amount paid to date, last payment date/amount, payment history rating (excellent/good/fair/poor). Use for questions like 'how much EMI have I paid', 'what is my payment history', 'when did I last pay'.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          },
+          "loan_id": {
+            "type": "string",
+            "description": "Specific loan ID if relevant. Omit for an all-loans summary."
+          }
+        },
+        "required": ["customer_id"]
+      }
+    },
+    {
+      "name": "check_loan_eligibility",
+      "description": "Checks whether a customer is eligible for a new loan right now, and if so, the maximum eligible amount and any pre-approved offer with indicative rate. Use for 'can I take another loan', 'am I eligible', 'highest loan amount I can get'. Always call this rather than assuming eligibility from conversation context.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          }
+        },
+        "required": ["customer_id"]
+      }
+    },
+    {
+      "name": "check_advance_payment_eligibility",
+      "description": "Checks whether a customer is allowed to pay extra/advance EMIs in the current cycle (e.g. paying 2 months' EMI at once), and the maximum number of advance EMIs permitted. Use before agreeing to set up any multi-EMI or extra payment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          },
+          "loan_id": {
+            "type": "string",
+            "description": "Loan ID the advance payment would apply to. Omit to default to the active loan."
+          },
+          "requested_emi_count": {
+            "type": "integer",
+            "description": "How many EMIs worth the caller wants to pay this cycle, e.g. 2."
+          }
+        },
+        "required": ["customer_id", "requested_emi_count"]
+      }
+    },
+    {
+      "name": "get_foreclosure_quote",
+      "description": "Calculates the exact amount required to fully close (foreclose) an active loan today, including any applicable foreclosure charges. Use when a caller wants to pay off their entire remaining loan in one go.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          },
+          "loan_id": {
+            "type": "string",
+            "description": "Loan ID to foreclose. Omit to default to the active loan."
+          }
+        },
+        "required": ["customer_id"]
+      }
+    },
+    {
+      "name": "initiate_payment_link",
+      "description": "Generates and sends a payment link via SMS to the customer's registered mobile number for a specified amount (regular EMI, advance EMI, overdue clearance, or foreclosure amount). Use only after the customer has confirmed they want to proceed with payment and the amount has been confirmed via the appropriate check function.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          },
+          "loan_id": {
+            "type": "string",
+            "description": "Loan ID the payment applies to."
+          },
+          "amount": {
+            "type": "number",
+            "description": "Exact rupee amount to be collected, as confirmed with the caller."
+          },
+          "payment_type": {
+            "type": "string",
+            "enum": ["regular_emi", "advance_emi", "overdue_clearance", "foreclosure"],
+            "description": "Type of payment this link is for."
+          }
+        },
+        "required": ["customer_id", "loan_id", "amount", "payment_type"]
+      }
+    },
+    {
+      "name": "send_statement",
+      "description": "Sends a loan statement or repayment schedule to the customer via SMS and/or registered email. Use when caller asks for a statement, repayment schedule, or proof of payments.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID."
+          },
+          "loan_id": {
+            "type": "string",
+            "description": "Loan ID for the statement. Omit for all loans."
+          },
+          "delivery_method": {
+            "type": "string",
+            "enum": ["sms", "email", "both"],
+            "description": "How the customer wants to receive it."
+          }
+        },
+        "required": ["customer_id", "delivery_method"]
+      }
+    },
+    {
+      "name": "log_fraud_report",
+      "description": "Logs a fraud/phishing report when a caller reports receiving a suspicious call, SMS, or request for OTP/PIN/card details claiming to be from MyShubhLife. Always call this before transferring such a call to a human agent.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID, if available. Can be null if caller is not yet verified — fraud reports should still be logged."
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of what the caller reported, in your own words."
+          },
+          "reported_number": {
+            "type": "string",
+            "description": "The phone number or sender ID the caller says contacted them, if they provided one."
+          }
+        },
+        "required": ["description"]
+      }
+    },
+    {
+      "name": "escalate_to_agent",
+      "description": "Transfers the live call to a human support agent (Priya / MyShubhLife support queue). Call this whenever the system prompt's escalation conditions are met: failed verification, abusive caller after warning, sensitive account changes, fraud reports, mental health/self-harm concern, negotiation requests, or any request outside the bot's scope. Always tell the caller verbally that you are transferring them BEFORE calling this function.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "description": "Verified customer ID, if available."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "identity_verification_failed",
+              "explicit_human_request",
+              "sensitive_account_change",
+              "abusive_caller",
+              "mental_health_concern",
+              "fraud_report",
+              "negotiation_or_waiver_request",
+              "out_of_scope",
+              "function_call_failure",
+              "other"
+            ],
+            "description": "Why this call is being escalated."
+          },
+          "context_summary": {
+            "type": "string",
+            "description": "1-2 sentence summary of the conversation so far, for the human agent's context."
+          }
+        },
+        "required": ["reason", "context_summary"]
+      }
+    }
+  ]
+}
