@@ -32,12 +32,18 @@ git push -u origin main
 
 1. Go to https://render.com → **New** → **Web Service**.
 2. Connect your GitHub repo.
-3. Render auto-detects `render.yaml`. If asked, confirm these (already in the file):
+3. Settings:
    - **Runtime:** Python
    - **Build command:** `pip install -r requirements.txt`
-   - **Start command:** `gunicorn --chdir functions server:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60`
+   - **Start command:** leave Render's default `gunicorn app:app` — the repo's root
+     `app.py` shim points it at `functions/server.py`. (You can also use the more
+     explicit `gunicorn --chdir functions server:app` if you prefer.)
    - **Health check path:** `/health`
    - **Plan:** Free
+
+> **Note:** `render.yaml` only applies if you deploy via Render **Blueprints**. If you
+> created a regular **Web Service**, that file is ignored and Render uses its default
+> start command `gunicorn app:app` — which is why the root `app.py` shim exists.
 
 ---
 
