@@ -35,7 +35,7 @@
           },
           "verification_value": {
             "type": "string",
-            "description": "The value the caller stated, e.g. 'Ramesh Yadav', '1988-04-12', or '7821'."
+            "description": "The value the caller stated, e.g. 'Sandeep Kumar', '1988-04-12', or '7821'."
           }
         },
         "required": ["customer_id", "verification_type", "verification_value"]
@@ -205,7 +205,7 @@
     },
     {
       "name": "escalate_to_agent",
-      "description": "Transfers the live call to a human support agent (Priya / MyShubhLife support queue). Call this whenever the system prompt's escalation conditions are met: failed verification, abusive caller after warning, sensitive account changes, fraud reports, mental health/self-harm concern, negotiation requests, or any request outside the bot's scope. Always tell the caller verbally that you are transferring them BEFORE calling this function.",
+      "description": "Transfers the live call to a human support agent (MyShubhLife support queue). Call this whenever the system prompt's escalation conditions are met: failed verification, abusive caller after warning, sensitive account changes, fraud reports, mental health/self-harm concern, negotiation requests, or any request outside the bot's scope. Always tell the caller verbally that you are transferring them BEFORE calling this function.",
       "parameters": {
         "type": "object",
         "properties": {

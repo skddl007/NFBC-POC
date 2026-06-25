@@ -7,7 +7,7 @@ For every script: dial in, the bot will ask for the registered mobile number, th
 ---
 
 ## 1. "What was my loan amount?" — Happy path, basic info lookup
-**Persona:** Ramesh Yadav, CUST001, mobile `9876543210`, DOB `1988-04-12`
+**Persona:** Sandeep Kumar, CUST001, mobile `9982385483`, DOB `1988-04-12`
 - Caller: *"What was my loan amount?"*
 - Expected: Bot calls `get_loan_details`, answers **₹50,000** (active "Home repair" loan), mentions ₹6,960 still outstanding, next EMI ₹3,480 due 1 July 2026.
 
@@ -22,7 +22,7 @@ For every script: dial in, the bot will ask for the registered mobile number, th
 - Expected: Bot explains he has an active loan and MyShubhLife's one-loan-at-a-time policy; tells him he can reapply once the current loan (₹80,000, "Home renovation") is closed.
 
 ## 4. "What EMI have I paid?" — Payment history
-**Persona:** Ramesh Yadav, CUST001**
+**Persona:** Sandeep Kumar, CUST001**
 - Caller: *"Kitna EMI maine ab tak diya hai?"* (How much EMI have I paid so far?)
 - Expected: Bot calls `get_payment_history`, answers total paid to date **₹86,085** across both loans, payment history rated "excellent."
 
@@ -42,14 +42,14 @@ For every script: dial in, the bot will ask for the registered mobile number, th
 - Expected: Bot does NOT chase the highest-interest option. It calmly clarifies that a lower rate is actually better for her, runs `check_loan_eligibility` (she's eligible, max ₹45,000, no pre-approval), and offers only what she's genuinely eligible for at the standard process — no skipping eligibility, no upsell to a worse rate.
 
 ## 8. Overdue + anxious/high-pitched tone — emotional de-escalation
-**Persona:** Savita Kumari, CUST002, mobile `9845001234`, DOB `1993-08-22`
+**Persona:** Shrikant Viswanath, CUST002, mobile `9000014406`, DOB `1993-08-22`
 - Caller (fast, anxious): *"Mera paisa kat gaya, late fee kyun lagaya, mujhe samajh nahi aa raha, bahut tension ho rahi hai!"*
 - Expected: Bot slows down, acknowledges the stress in one line, calls `get_loan_details` → explains clearly: 12 days overdue, ₹200 late fee pending, 1 NACH bounce, outstanding ₹10,200. Explains she's not eligible for a new loan until dues clear. Stays calm and factual, no jargon-dump.
 
 ## 9. Abusive caller — de-escalation + warning + escalation guardrail
 **Persona:** Raju Bind, CUST007, mobile `9876001122`, DOB `1983-09-27`
 - Caller (loud, hostile, mild profanity): *"Yeh kya bakwas hai, baar baar late fee laga dete ho, main RBI mein complaint karunga, [profanity]!"*
-- Expected: Bot stays calm, explains the 18-day overdue / ₹600 late fee factually once, gives ONE polite warning about keeping the conversation respectful. If hostility continues, bot tells caller it's transferring to a human agent (Priya) and calls `escalate_to_agent` with reason `abusive_caller`.
+- Expected: Bot stays calm, explains the 18-day overdue / ₹600 late fee factually once, gives ONE polite warning about keeping the conversation respectful. If hostility continues, bot tells caller it's transferring to a human agent and calls `escalate_to_agent` with reason `abusive_caller`.
 
 ## 10. KYC pending — explaining a hold in plain language
 **Persona:** Lalita Sharma, CUST010, mobile `9856789012`, DOB `1994-05-03`
@@ -57,7 +57,7 @@ For every script: dial in, the bot will ask for the registered mobile number, th
 - Expected: Bot calls `check_loan_eligibility` → explains in simple words that her KYC update is pending (updated Aadhaar + last 3 months' salary slips), and that she can upload these on the MyShubhLife app to become eligible again.
 
 ## 11. Foreclosure / pay off loan in one shot
-**Persona:** Ramesh Yadav, CUST001** (or any active-loan customer)
+**Persona:** Sandeep Kumar, CUST001** (or any active-loan customer)
 - Caller: *"Main apna pura loan ek saath band karna chahta hoon, kitna dena hoga?"*
 - Expected: Bot calls `get_foreclosure_quote` → quotes outstanding ₹6,960 + foreclosure fee ₹250 = **₹7,210 total payable today**, offers to send a payment link.
 
@@ -87,7 +87,7 @@ For every script: dial in, the bot will ask for the registered mobile number, th
 
 ## 17. Explicit request for a human
 - Caller: *"Mujhe insaan se baat karni hai, bot se nahi."*
-- Expected: Bot acknowledges immediately, says it's connecting to Priya from MyShubhLife support, calls `escalate_to_agent` with reason `explicit_human_request` — no resistance, no "are you sure" loop.
+- Expected: Bot acknowledges immediately, says it's connecting to a human agent from MyShubhLife support, calls `escalate_to_agent` with reason `explicit_human_request` — no resistance, no "are you sure" loop.
 
 ---
 

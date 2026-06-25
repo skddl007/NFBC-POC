@@ -351,8 +351,8 @@ def escalate_to_agent():
     # at the agent level (see docs/build_guide.md) rather than a plain function return.
     return jsonify({
         "escalated": True,
-        "transfer_number": "+911800572227",
-        "agent_name": "Priya",
+        "transfer_number": "+916397039765",
+        "agent_name": "human agent",
         "message": "Call is being transferred to a human agent."
     })
 

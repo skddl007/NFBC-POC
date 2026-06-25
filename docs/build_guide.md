@@ -10,7 +10,7 @@ A voice agent that:
 1. Answers inbound calls about loan amount, EMIs paid, eligibility for a next loan, advance/partial EMI payment, foreclosure, KYC holds, and general company FAQs.
 2. Verifies caller identity before sharing any data.
 3. Handles different caller tones (calm, anxious, confused, abusive, distressed) with the right guardrail behavior for each.
-4. Escalates to a human agent ("Priya, MyShubhLife support") whenever it can't or shouldn't handle something itself.
+4. Escalates to a human agent (MyShubhLife support) whenever it can't or shouldn't handle something itself.
 5. Runs entirely on synthetic data (20 customers) so nothing real is at risk during the demo.
 
 ### Files in this project
@@ -104,7 +104,7 @@ Watch Retell's call transcript/logs after each test call to see which functions 
 2. **Script 1**: basic loan-amount lookup — show the JSON record on screen next to the live call to prove the answer is real, not scripted text-to-speech.
 3. **Script 2 vs 3**: same intent ("can I get a new loan"), two different real outcomes (eligible+pre-approved vs. blocked by one-loan policy) — this demonstrates the bot is reasoning over actual account state, not giving a canned answer.
 4. **Script 7**: the "urgent, give me the highest interest loan" pressure test — this is usually the single most convincing guardrail moment for a lending-compliance audience.
-5. **Script 9**: abusive caller → one warning → escalation to "Priya" — show the transfer happening live.
+5. **Script 9**: abusive caller → one warning → escalation to a human agent — show the transfer happening live.
 6. **Close with the eligibility/KYC and fraud-report scripts (10, 13)** if time allows, since they show breadth across compliance-sensitive categories.
 7. Mention next steps: connecting to MyShubhLife's real loan management system in place of `customers.json`, adding call recording/QA, and load-testing concurrent calls before any production pilot.
 

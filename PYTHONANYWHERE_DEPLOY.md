@@ -119,9 +119,9 @@ Then on the **Web** tab → **Virtualenv** section, enter:
    ```bash
    curl -X POST https://<username>.pythonanywhere.com/functions/lookup_customer_by_mobile \
      -H "Content-Type: application/json" \
-     -d '{"mobile_number":"9876543210"}'
+     -d '{"mobile_number":"9982385483"}'
    ```
-   Expected: Ramesh Yadav / CUST001 found.
+   Expected: Sandeep Kumar / CUST001 found.
 
 ---
 

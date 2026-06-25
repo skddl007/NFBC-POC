@@ -33,9 +33,9 @@
     "one_loan_at_a_time_policy": true,
     "support_number": "1800-572-2277",
     "support_hours": "Mon–Sat, 9:00 AM – 6:00 PM IST",
-    "agent_transfer_number_internal": "+91-1800-572-2277",
-    "escalation_contact_name": "Priya",
-    "escalation_note": "Default human-agent persona for escalations in this POC is 'Priya from MyShubhLife'. In production this should route to the live agent queue/ACD, not a named individual.",
+    "agent_transfer_number_internal": "+91-6397039765",
+    "escalation_contact_name": "human agent",
+    "escalation_note": "Escalations transfer to an unnamed human agent on the MyShubhLife support line. In production this should route to the live agent queue/ACD, not a named individual.",
     "employer_partners": [
       "Bosch India",
       "Mphasis",
@@ -60,8 +60,8 @@
   "customers": [
     {
       "id": "CUST001",
-      "name": "Ramesh Yadav",
-      "mobile": "9876543210",
+      "name": "Sandeep Kumar",
+      "mobile": "9982385483",
       "alt_mobile": null,
       "dob": "1988-04-12",
       "pan_masked": "ABCRY1234D",
@@ -132,8 +132,8 @@
     },
     {
       "id": "CUST002",
-      "name": "Savita Kumari",
-      "mobile": "9845001234",
+      "name": "Shrikant Viswanath",
+      "mobile": "9000014406",
       "alt_mobile": "9845001235",
       "dob": "1993-08-22",
       "pan_masked": "BSTSK5678F",
